@@ -1,6 +1,18 @@
 #include "can.h"
 #include "stm32h7xx_hal_fdcan.h"
 
+FDCAN_HandleTypeDef can1 = {0};
+FDCAN_HandleTypeDef can2 = {0};
+
+FDCAN_TxHeaderTypeDef msg = {0}; 
+FDCAN_TxHeaderTypeDef fault_msg = {0};
+FDCAN_TxHeaderTypeDef RTD_msg = {0};
+
+QueueHandle_t back_msg_queue = NULL;
+QueueHandle_t fault_msg_queue = NULL;
+QueueHandle_t front_msg_queue = NULL;
+QueueHandle_t sensor_msg_queue = NULL;
+
 static HAL_StatusTypeDef config_canbus(FDCAN_HandleTypeDef *header, FDCAN_GlobalTypeDef *instance)
 {
   header->Instance = instance;
@@ -73,16 +85,16 @@ void send_to_queue(FDCAN_HandleTypeDef *hfdcan, uint32_t FIFO, FDCAN_RxHeaderTyp
 
         if(queue != NULL)
         {
-            xQueueSendToFrontFromISR(queue, msg_header, NULL);
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+            xQueueSendToBackFromISR(queue, msg_header, &xHigherPriorityTaskWoken);
 
             UBaseType_t framesWaiting = uxQueueMessagesWaitingFromISR(queue);
 
-            if(framesWaiting >= QUEUE_THRESHOLD)
+            if(framesWaiting >= QUEUE_THRESHOLD && task != NULL)
             {
-                BaseType_t xHigherPriorityTaskWoken = pdFALSE;
                 vTaskNotifyGiveFromISR(task, &xHigherPriorityTaskWoken);
-                portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
             }
+            portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         }
     }
 }
@@ -120,6 +132,7 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
         }
     }
 }
+
 
 
 
