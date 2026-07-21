@@ -1,7 +1,5 @@
 #include "processing.h"
 #include "can.h"
-#include "stm32h7xx_hal_fdcan.h"
-
 
 void process_msg_task(void* pvParameters)
 {
@@ -25,6 +23,14 @@ void process_msg_task(void* pvParameters)
     }
 }
 
+void process_fault_msg_task(void* pvParameters)
+{
+    for(;;)
+    {
+        
+    }
+}
+
 void process_front_msg_task(void* pvParameters)
 {
     for(;;)
@@ -33,12 +39,6 @@ void process_front_msg_task(void* pvParameters)
     }
 }
 
-void process_fault_msg_task(void* pvParameters)
-{
-    for(;;)
-    {
 
-    }
-}
 
 

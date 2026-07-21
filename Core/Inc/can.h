@@ -18,9 +18,9 @@
 extern FDCAN_HandleTypeDef can1;
 extern FDCAN_HandleTypeDef can2;
 
-extern FDCAN_TxHeaderTypeDef msg;
-extern FDCAN_TxHeaderTypeDef fault_msg;
-extern FDCAN_TxHeaderTypeDef RTD_msg;
+FDCAN_TxHeaderTypeDef msg;
+FDCAN_TxHeaderTypeDef fault_msg;
+FDCAN_TxHeaderTypeDef RTD_msg;
 
 
 typedef struct{
@@ -29,10 +29,10 @@ typedef struct{
     uint32_t timestamp;
 }rx_msg;
 
-extern QueueHandle_t back_msg_queue;
-extern QueueHandle_t fault_msg_queue;
-extern QueueHandle_t front_msg_queue;
-extern QueueHandle_t sensor_msg_queue;
+QueueHandle_t back_msg_queue;
+QueueHandle_t fault_msg_queue;
+QueueHandle_t front_msg_queue;
+QueueHandle_t sensor_msg_queue;
 
 extern TaskHandle_t process_back_msg;
 extern TaskHandle_t process_front_msg;
@@ -41,7 +41,7 @@ extern TaskHandle_t process_sensor_msg;
 
 static HAL_StatusTypeDef config_canbus(FDCAN_HandleTypeDef *header, FDCAN_GlobalTypeDef *instance);
 static void config_tx_msg(FDCAN_TxHeaderTypeDef *header, uint16_t id);
-void can_init();
+void can_init(void);
 void send_to_queue(FDCAN_HandleTypeDef *hfdcan, uint32_t FIFO, FDCAN_RxHeaderTypeDef *header, rx_msg* msg_header, QueueHandle_t queue, TaskHandle_t task);
 
 #endif

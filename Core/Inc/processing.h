@@ -14,6 +14,12 @@ typedef struct {
     QueueHandle_t queue;         
 } can_task_params_t;
 
+
+extern QueueHandle_t back_msg_queue;
+extern QueueHandle_t fault_msg_queue;
+extern QueueHandle_t front_msg_queue;
+extern QueueHandle_t sensor_msg_queue;
+
 extern FDCAN_TxHeaderTypeDef msg;
 extern FDCAN_TxHeaderTypeDef fault_msg;
 extern FDCAN_TxHeaderTypeDef RTD_msg;

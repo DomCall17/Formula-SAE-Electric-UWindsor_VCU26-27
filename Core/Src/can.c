@@ -60,7 +60,7 @@ static void config_tx_msg(FDCAN_TxHeaderTypeDef *header, uint16_t id)
 	header->MessageMarker = 0;
 }
 
-void CAN_Init()
+void CAN_Init(void)
 {
     config_canbus(&can1, FDCAN1);
     config_canbus(&can2, FDCAN2);
