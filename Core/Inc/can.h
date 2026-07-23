@@ -13,10 +13,14 @@
 #define BACK_MSG_QUEUE_LEN (uint8_t)16
 #define FAULT_MSG_QUEUE_LEN (uint8_t)16
 #define FRONT_MSG_QUEUE_LEN (uint8_t)16
+#define SENSOR_MSG_QUEUE_LEN (uint8_t)16
 #define QUEUE_THRESHOLD (uint8_t)12 
 
-extern FDCAN_HandleTypeDef can1;
-extern FDCAN_HandleTypeDef can2;
+
+FDCAN_HandleTypeDef can1;
+FDCAN_HandleTypeDef can2;
+
+FDCAN_FilterTypeDef sFilterConfig;
 
 FDCAN_TxHeaderTypeDef msg;
 FDCAN_TxHeaderTypeDef fault_msg;
@@ -42,6 +46,7 @@ extern TaskHandle_t process_sensor_msg;
 static HAL_StatusTypeDef config_canbus(FDCAN_HandleTypeDef *header, FDCAN_GlobalTypeDef *instance);
 static void config_tx_msg(FDCAN_TxHeaderTypeDef *header, uint16_t id);
 void can_init(void);
+void config_can_filter(FDCAN_HandleTypeDef *hfdcan,FDCAN_FilterTypeDef *filter_header, uint32_t fifo, uint32_t id1, uint32_t id2);
 void send_to_queue(FDCAN_HandleTypeDef *hfdcan, uint32_t FIFO, FDCAN_RxHeaderTypeDef *header, rx_msg* msg_header, QueueHandle_t queue, TaskHandle_t task);
 
 #endif
