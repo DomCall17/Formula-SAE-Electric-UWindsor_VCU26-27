@@ -13,7 +13,7 @@ QueueHandle_t fault_msg_queue = NULL;
 QueueHandle_t front_msg_queue = NULL;
 QueueHandle_t sensor_msg_queue = NULL;
 
-static HAL_StatusTypeDef config_canbus(FDCAN_HandleTypeDef *header, FDCAN_GlobalTypeDef *instance)
+static HAL_StatusTypeDef config_canbus(FDCAN_HandleTypeDef *header, FDCAN_GlobalTypeDef *instance, uint16_t offset, uint8_t rxfifo0_elem_num, uint8_t rxfifo1_elem_num)
 {
   header->Instance = instance;
   header->Init.FrameFormat = FDCAN_FRAME_CLASSIC;
@@ -29,18 +29,18 @@ static HAL_StatusTypeDef config_canbus(FDCAN_HandleTypeDef *header, FDCAN_Global
   header->Init.DataSyncJumpWidth = 1;
   header->Init.DataTimeSeg1 = 1;
   header->Init.DataTimeSeg2 = 1;
-  header->Init.MessageRAMOffset = 1920;
+  header->Init.MessageRAMOffset = offset;
   header->Init.StdFiltersNbr = 1;
   header->Init.ExtFiltersNbr = 0;
-  header->Init.RxFifo0ElmtsNbr = 8;
+  header->Init.RxFifo0ElmtsNbr = rxfifo0_elem_num;
   header->Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
-  header->Init.RxFifo1ElmtsNbr = 8;
+  header->Init.RxFifo1ElmtsNbr = rxfifo1_elem_num;
   header->Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
   header->Init.RxBuffersNbr = 0;
   header->Init.RxBufferSize = FDCAN_DATA_BYTES_8;
   header->Init.TxEventsNbr = 0;
   header->Init.TxBuffersNbr = 0;
-  header->Init.TxFifoQueueElmtsNbr = 8;
+  header->Init.TxFifoQueueElmtsNbr = 16;
   header->Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   header->Init.TxElmtSize = FDCAN_DATA_BYTES_8;
 
@@ -62,8 +62,8 @@ static void config_tx_msg(FDCAN_TxHeaderTypeDef *header, uint16_t id)
 
 void CAN_Init(void)
 {
-    config_canbus(&can1, FDCAN1);
-    config_canbus(&can2, FDCAN2);
+    config_canbus(&can1, FDCAN1, 0, 24, 8);
+    config_canbus(&can2, FDCAN2, 200, 16, 16);
     HAL_FDCAN_Start(&can1);
     HAL_FDCAN_Start(&can2);
 
@@ -71,9 +71,10 @@ void CAN_Init(void)
     config_tx_msg(&fault_msg, FAULT_ID);
     config_tx_msg(&RTD_msg, RTD_ID);
 
-    back_msg_queue = xQueueCreate(FRONT_MSG_QUEUE_LEN, sizeof(rx_msg));
+    back_msg_queue = xQueueCreate(BACK_MSG_QUEUE_LEN, sizeof(rx_msg));
     fault_msg_queue = xQueueCreate(FAULT_MSG_QUEUE_LEN, sizeof(rx_msg));
-    front_msg_queue = xQueueCreate(BACK_MSG_QUEUE_LEN, sizeof(rx_msg));
+    front_msg_queue = xQueueCreate(FRONT_MSG_QUEUE_LEN, sizeof(rx_msg));
+    sensor_msg_queue = xQueueCreate(SENSOR_MSG_QUEUE_LEN, sizeof(rx_msg));
 }
 
 void send_to_queue(FDCAN_HandleTypeDef *hfdcan, uint32_t FIFO, FDCAN_RxHeaderTypeDef *header, rx_msg* msg_header, QueueHandle_t queue, TaskHandle_t task)
