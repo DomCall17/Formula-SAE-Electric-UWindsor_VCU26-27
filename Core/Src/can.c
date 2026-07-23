@@ -60,10 +60,27 @@ static void config_tx_msg(FDCAN_TxHeaderTypeDef *header, uint16_t id)
 	header->MessageMarker = 0;
 }
 
+void config_can_filter(uint8_t index, FDCAN_HandleTypeDef *hfdcan, FDCAN_FilterTypeDef *filter_header, uint32_t fifo, uint32_t id1, uint32_t id2)
+{
+
+    filter_header->IdType = FDCAN_STANDARD_ID;
+    filter_header->FilterIndex = index;
+    filter_header->FilterType = FDCAN_FILTER_DUAL;   
+    filter_header->FilterConfig = fifo;
+    filter_header->FilterID1 = id1;                
+    filter_header->FilterID2 = id2;  
+    
+    HAL_FDCAN_ConfigFilter(hfdcan, filter_header);
+}
+
 void CAN_Init(void)
 {
     config_canbus(&can1, FDCAN1, 0, 24, 8);
     config_canbus(&can2, FDCAN2, 200, 16, 16);
+
+    HAL_FDCAN_ConfigGlobalFilter(&can1, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
+    HAL_FDCAN_ConfigGlobalFilter(&can2, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
+
     HAL_FDCAN_Start(&can1);
     HAL_FDCAN_Start(&can2);
 
@@ -75,6 +92,9 @@ void CAN_Init(void)
     fault_msg_queue = xQueueCreate(FAULT_MSG_QUEUE_LEN, sizeof(rx_msg));
     front_msg_queue = xQueueCreate(FRONT_MSG_QUEUE_LEN, sizeof(rx_msg));
     sensor_msg_queue = xQueueCreate(SENSOR_MSG_QUEUE_LEN, sizeof(rx_msg));
+
+    HAL_FDCAN_ActivateNotification(&can1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
+    HAL_FDCAN_ActivateNotification(&can2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
 }
 
 void send_to_queue(FDCAN_HandleTypeDef *hfdcan, uint32_t FIFO, FDCAN_RxHeaderTypeDef *header, rx_msg* msg_header, QueueHandle_t queue, TaskHandle_t task)
