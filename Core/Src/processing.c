@@ -1,15 +1,15 @@
 #include "processing.h"
 #include "can.h"
 
-void process_msg_task(void* pvParameters)
+void process_back_msg_task(void* pvParameters)
 {
     can_task_params_t *params = (can_task_params_t*) pvParameters;
-    FDCAN_HandleTypeDef *hfdcan = params->hfdcan; 
+    FDCAN_HandleTypeDef *hfdcan = params->hfdcan_write; 
     QueueHandle_t queue = params->queue;
     rx_msg msg_header;
     for(;;)
     {
-        uint32_t notify_count = ulTaskNotifyTake(pdTRUE, BATCH_TIMEOUT_MS);
+        //uint32_t notify_count = ulTaskNotifyTake(pdTRUE, BATCH_TIMEOUT_MS);
 
         while(xQueueReceive(queue, &msg_header, 0) == pdTRUE)
         {

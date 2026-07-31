@@ -1,5 +1,4 @@
 #include "can.h"
-#include "stm32h7xx_hal_fdcan.h"
 
 FDCAN_HandleTypeDef can1 = {0};
 FDCAN_HandleTypeDef can2 = {0};
@@ -13,7 +12,12 @@ QueueHandle_t fault_msg_queue = NULL;
 QueueHandle_t front_msg_queue = NULL;
 QueueHandle_t sensor_msg_queue = NULL;
 
-static HAL_StatusTypeDef config_canbus(FDCAN_HandleTypeDef *header, FDCAN_GlobalTypeDef *instance, uint16_t offset, uint8_t rxfifo0_elem_num, uint8_t rxfifo1_elem_num)
+TaskHandle_t process_back_msg;
+TaskHandle_t process_front_msg;
+TaskHandle_t process_fault_msg;
+TaskHandle_t process_sensor_msg;
+
+HAL_StatusTypeDef config_canbus(FDCAN_HandleTypeDef *header, FDCAN_GlobalTypeDef *instance, uint16_t offset, uint8_t rxfifo0_elem_num, uint8_t rxfifo1_elem_num)
 {
   header->Instance = instance;
   header->Init.FrameFormat = FDCAN_FRAME_CLASSIC;
@@ -47,7 +51,7 @@ static HAL_StatusTypeDef config_canbus(FDCAN_HandleTypeDef *header, FDCAN_Global
   return HAL_FDCAN_Init(header);
 }
 
-static void config_tx_msg(FDCAN_TxHeaderTypeDef *header, uint16_t id)
+void config_tx_msg(FDCAN_TxHeaderTypeDef *header, uint16_t id)
 {
     header->Identifier = id;
 	header->IdType = FDCAN_STANDARD_ID;
@@ -73,7 +77,7 @@ void config_can_filter(uint8_t index, FDCAN_HandleTypeDef *hfdcan, FDCAN_FilterT
     HAL_FDCAN_ConfigFilter(hfdcan, filter_header);
 }
 
-void CAN_Init(void)
+void can_init(void)
 {
     config_canbus(&can1, FDCAN1, 0, 24, 8);
     config_canbus(&can2, FDCAN2, 200, 16, 16);

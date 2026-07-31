@@ -1,64 +1,38 @@
 
 #include "main.h"
-#include "FreeRTOS.h"
-#include "cmsis_os2.h"
 
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 ADC_HandleTypeDef hadc3;
 
-FDCAN_HandleTypeDef hfdcan1;
-FDCAN_HandleTypeDef hfdcan2;
-FDCAN_HandleTypeDef hfdcan3;
-
-
-osThreadId_t defaultTaskHandle;
-const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
-
-void PeriphCommonClock_Config(void);
-static void MPU_Config(void);
-static void MX_GPIO_Init(void);
-static void MX_ADC1_Init(void);
-static void MX_ADC2_Init(void);
-static void MX_ADC3_Init(void);
-static void MX_FDCAN1_Init(void);
-static void MX_FDCAN2_Init(void);
-static void MX_FDCAN3_Init(void);
-void StartDefaultTask(void *argument);
-
-
 int main(void)
 {
-
-
   MPU_Config();
-
-
   HAL_Init();
-
   SystemClock_Config();
-
-
   PeriphCommonClock_Config();
-
-
   MX_GPIO_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_ADC3_Init();
-  MX_FDCAN1_Init();
-  MX_FDCAN2_Init();
-  MX_FDCAN3_Init();
+  MX_TIM6_Init();
 
-  osKernelInitialize();
+ can_task_params_t param;
+ param.hfdcan_write = &can2;
+ param.queue =  back_msg_queue;
 
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+xTaskCreate(
+    process_back_msg_task,
+    "back_msg", 
+    256,
+    (void*)&param,
+     tskIDLE_PRIORITY + 2, 
+    &process_back_msg);
 
-  osKernelStart();
+
+  vTaskStartScheduler();
+  can_init();
+  
 
   while (1)
   {
@@ -153,7 +127,7 @@ void PeriphCommonClock_Config(void)
   * @param None
   * @retval None
   */
-static void MX_ADC1_Init(void)
+void MX_ADC1_Init(void)
 {
 
   /* USER CODE BEGIN ADC1_Init 0 */
@@ -222,7 +196,7 @@ static void MX_ADC1_Init(void)
   * @param None
   * @retval None
   */
-static void MX_ADC2_Init(void)
+void MX_ADC2_Init(void)
 {
 
   /* USER CODE BEGIN ADC2_Init 0 */
@@ -282,7 +256,7 @@ static void MX_ADC2_Init(void)
   * @param None
   * @retval None
   */
-static void MX_ADC3_Init(void)
+void MX_ADC3_Init(void)
 {
 
   /* USER CODE BEGIN ADC3_Init 0 */
@@ -345,7 +319,7 @@ static void MX_ADC3_Init(void)
   * @param None
   * @retval None
   */
-static void MX_GPIO_Init(void)
+void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
@@ -376,24 +350,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
-
-/* USER CODE BEGIN Header_StartDefaultTask */
-/**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END 5 */
-}
 
  /* MPU Configuration */
 
@@ -460,6 +416,35 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
+
+
+void MX_TIM6_Init(void)
+{
+    TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+    htim6.Instance = TIM6;
+    htim6.Init.Prescaler = (HAL_RCC_GetPCLK1Freq() * 2 / 1000) - 1; // Assuming APB1 prescaler != 1, adjust if needed
+    htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim6.Init.Period = 999; // 1ms tick at 1MHz timer clock
+    htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_SLAVEMODE_DISABLE;
+    if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    if (HAL_TIM_Base_Start_IT(&htim6) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
 #ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
