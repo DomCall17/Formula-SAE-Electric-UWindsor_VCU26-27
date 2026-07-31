@@ -1,10 +1,6 @@
 
 #include "main.h"
 
-ADC_HandleTypeDef hadc1;
-ADC_HandleTypeDef hadc2;
-ADC_HandleTypeDef hadc3;
-
 int main(void)
 {
   MPU_Config();
@@ -134,6 +130,7 @@ void MX_ADC1_Init(void)
 
   /* USER CODE END ADC1_Init 0 */
 
+  ADC_HandleTypeDef hadc1;
   ADC_MultiModeTypeDef multimode = {0};
   ADC_ChannelConfTypeDef sConfig = {0};
 
@@ -203,6 +200,7 @@ void MX_ADC2_Init(void)
 
   /* USER CODE END ADC2_Init 0 */
 
+  ADC_HandleTypeDef hadc2;
   ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC2_Init 1 */
@@ -263,6 +261,7 @@ void MX_ADC3_Init(void)
 
   /* USER CODE END ADC3_Init 0 */
 
+  ADC_HandleTypeDef hadc3;
   ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC3_Init 1 */
